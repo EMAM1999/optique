@@ -4,11 +4,13 @@
  * and open the template in the editor.
  */
 package activities;
+import design.APP;
 import javafx.scene.Group;
-import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 // 2. add choice to remove wasted rays
 // 2. add choice to dash the object
 
@@ -18,36 +20,70 @@ import javafx.scene.text.Font;
  */
 public class Systeme_Simple extends System {
 
+      private double[] merrorRays;
+
 //  point d'intersection
-      public double x0;
-      public double y0;
+      private double x0;
+      private double y0;
 
       private Type type;
-      private double xx;
-      private double yy;
       private double APlace;
       private double ALength;
 
-      private final int maxX = 10000;
       private final int nOfLentille;
       private boolean removeWastedRays;
 
-      private final double xEdge = 100_000;
-      private final double yEdge = 100_000;
+      private boolean ABNamed;
+      private String ABName;
+      private boolean AB_Named;
+      private String AB_Name;
+      private String data;
+//      public Systeme_Simple(Type _type, double _F) {
+//            this(_type, _F, _F * 2, 100, 0, false);
+//      }
 
-      public Systeme_Simple(Type _type, double _xx, double _yy, double _F) {
-            this(_type, _xx, _yy, _F, _F * 2, 100, 0, false);
+      public Systeme_Simple(Type _type, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays) {
+            this(_type, _F, _APlace, _ALength, _nOfLentille, _removeWastedRays, "");
       }
 
-      public Systeme_Simple(Type _type, double _xx, double _yy, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays) {
+      public Systeme_Simple(Type _type, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays, String ABName) {
+            this(_type, _F, _APlace, _ALength, _nOfLentille, _removeWastedRays, ABName, "");
+      }
+
+      public Systeme_Simple(Type _type, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays, String ABName, String AB_Name) {
+            this(_type, _F, _APlace, _ALength, _nOfLentille, _removeWastedRays, ABName, AB_Name, "");
+      }
+
+      public Systeme_Simple(Type _type, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays, String ABName, String AB_Name, String data) {
             this.type = _type;
-            this.xx = Math.abs(_xx);
-            this.yy = Math.abs(_yy);
             super.F = _F;
             this.APlace = _APlace;
             this.ALength = _ALength;
             this.nOfLentille = _nOfLentille;
             this.removeWastedRays = _removeWastedRays;
+            setYy(Math.abs(2.5 * _ALength));
+            this.ABName = ABName;
+            this.ABNamed = ABName.trim().isEmpty() ? false : true;
+            this.AB_Name = AB_Name;
+            this.AB_Named = AB_Name.trim().isEmpty() ? false : true;
+
+            super.setDataShown(true);
+      }
+
+      public String getABName() {
+            return ABName;
+      }
+
+      public void setABName(String _ABName) {
+            this.ABName = _ABName;
+      }
+
+      public String getAB_Name() {
+            return AB_Name;
+      }
+
+      public void setAB_Name(String _AB_Name) {
+            this.AB_Name = _AB_Name;
       }
 
       public double getALength() {
@@ -66,6 +102,14 @@ public class Systeme_Simple extends System {
             this.APlace = _APlace;
       }
 
+      public String getData() {
+            return data;
+      }
+
+      public void setData(String _data) {
+            this.data = _data;
+      }
+
       @Override
       public void setF(double _F) {
             super.F = _F;
@@ -77,10 +121,6 @@ public class Systeme_Simple extends System {
             }
       }
 
-      public int getMaxX() {
-            return maxX;
-      }
-
       public Type getType() {
             return type;
       }
@@ -90,22 +130,6 @@ public class Systeme_Simple extends System {
             setF(Math.copySign(getF(), APlace * (_type == Type.LENTILLE_CONVERGENTE ? 1 : -1)));
       }
 
-      public double getXx() {
-            return xx;
-      }
-
-      public void setXx(int _xx) {
-            this.xx = _xx;
-      }
-
-      public double getYy() {
-            return yy;
-      }
-
-      public void setYy(int _yy) {
-            this.yy = _yy;
-      }
-
       @Override
       public Group draw() {
             Group g = new Group();
@@ -113,19 +137,25 @@ public class Systeme_Simple extends System {
             Group e = drawEdges();
             g.getChildren().addAll(e);
             //////////////////////
-
             switch ( type ) {
                   case LENTILLE_DIVERGENTE:
                   case LENTILLE_CONVERGENTE:
-                        Group f = drawF();
                         Group rays = drawLightRay();
-                        g.getChildren().addAll(f, rays);
+                        g.getChildren().addAll(rays);
+                        Group f = drawF();
+                        g.getChildren().addAll(f);
                         break;
                   case MERROR:
                         x0 = -APlace;
                         y0 = ALength;
-                        Group merrorRays = drawMerrorLightRay();
+                        Group merrorRays = drawMerrorLightRay(3);
                         g.getChildren().addAll(merrorRays);
+            }
+            if ( isDataShown() ) {
+                  Group AB = drawABData();
+                  Group data = drawLunetteData();
+                  Group f = drawFData();
+                  g.getChildren().addAll(AB, data, f);
             }
             Group axis = drawAxis();
             Group A = drawA(APlace, ALength, 2.5, false, Color.BLACK);
@@ -134,28 +164,90 @@ public class Systeme_Simple extends System {
             return g;
       }
 
+      public double getX0() {
+            return x0;
+      }
+
+      public void setX0(double _x0) {
+            this.x0 = _x0;
+      }
+
+      public double getY0() {
+            return y0;
+      }
+
+      public void setY0(double _y0) {
+            this.y0 = _y0;
+      }
+
+      public boolean isABNamed() {
+            return ABNamed;
+      }
+
+      public void setABNamed(boolean _ABNamed) {
+            this.ABNamed = _ABNamed;
+      }
+
+      public boolean isAB_Named() {
+            return AB_Named;
+      }
+
+      public void setAB_Named(boolean _AB_Named) {
+            this.AB_Named = _AB_Named;
+      }
+
       private Group drawEdges() {
-            Line x1 = new Line(-xEdge, -yEdge, xEdge, -yEdge);
-            Line x2 = new Line(-xEdge, yEdge, xEdge, yEdge);
-            Line y1 = new Line(-xEdge, yEdge, -xEdge, -yEdge);
-            Line y2 = new Line(xEdge, yEdge, xEdge, -yEdge);
+            Line x1 = new Line(-APP.xEdge, -APP.yEdge, APP.xEdge, -APP.yEdge);
+            x1.setStrokeWidth(APP.edgeWidth);
+            Line x2 = new Line(-APP.xEdge, APP.yEdge, APP.xEdge, APP.yEdge);
+            x2.setStrokeWidth(APP.edgeWidth);
+            Line y1 = new Line(-APP.xEdge, APP.yEdge, -APP.xEdge, -APP.yEdge);
+            y1.setStrokeWidth(APP.edgeWidth);
+            Line y2 = new Line(APP.xEdge, APP.yEdge, APP.xEdge, -APP.yEdge);
+            y2.setStrokeWidth(APP.edgeWidth);
             return new Group(x1, x2, y1, y2);
       }
 
-      private Group drawMerrorLightRay() {
+      private Group drawFData() {
             Group g = new Group();
+            if ( F != 0 ) {
+                  int fs = 15;
 
-            for ( int i = 0; i < 3; i++ ) {
-                  double a = Math.random() * ALength + ALength;
-                  double a0 = -(Math.random() * 2 * ALength - ALength / 3);
-                  double a1 = Math.random() > 0.5 ? a : a0;
-                  Line l1 = new Line(APlace, ALength, 0, a1);
+                  Text f1 = new Text("F'" + (nOfLentille == 0 ? "" : nOfLentille));
+                  f1.setFont(Font.font(fs));
+                  f1.setTranslateX(F);
+                  f1.setTranslateY(20);
+
+                  Text f2 = new Text("F" + (nOfLentille == 0 ? "" : nOfLentille));
+                  f2.setFont(Font.font(fs));
+                  f2.setTranslateX(-F);
+                  f2.setTranslateY(20);
+
+                  g.getChildren().addAll(f1, f2);
+            }
+            return g;
+      }
+
+      private Group drawMerrorLightRay(int numberOfRays) {
+            Group g = new Group();
+            merrorRays = merrorRays == null ? new double[numberOfRays] : merrorRays;
+
+            for ( int i = 0; i < numberOfRays; i++ ) {
+                  double r = merrorRays[i];
+                  if ( r == 0 ) {
+                        double a = Math.random() * ALength * 0.25 + ALength;
+                        double a0 = -(Math.random() * ALength - ALength / 3);
+                        r = Math.random() > 0.5 ? a : a0;
+                        merrorRays[i] = r;
+                  }
+
+                  Line l1 = new Line(APlace, ALength, 0, r);
                   l1.setStroke(Color.YELLOWGREEN);
 
-                  Line l2 = new Line(0, a1, APlace, a1 - ALength + a1);
+                  Line l2 = new Line(0, r, APlace, r - ALength + r);
                   l2.setStroke(Color.YELLOWGREEN);
 
-                  Line l3 = new Line(0, a1, x0, y0);
+                  Line l3 = new Line(0, r, x0, y0);
                   l3.setStroke(Color.SIENNA);
                   l3.setOpacity(0.5);
                   g.getChildren().addAll(l1, l2, l3);
@@ -172,6 +264,9 @@ public class Systeme_Simple extends System {
 
       private Group drawA(double x, double y, double width, boolean isDashed, Color color) {
             Group g = new Group();
+            if ( Math.abs(x) > Math.abs(APP.xEdge) || Math.abs(y) > Math.abs(APP.yEdge) ) {
+                  return g;
+            }
             if ( isDashed ) {
                   for ( int i = 0; i < Math.abs(y); i += 10 ) {
                         Line l = new Line(x, Math.copySign(i, y), x, Math.copySign(i + 2, y));
@@ -198,18 +293,47 @@ public class Systeme_Simple extends System {
       private Group drawF() {
             int q = 3;
             Line fl1 = new Line(F, -q, F, q);
-            Label f1 = new Label("F'" + (nOfLentille == 0 ? "" : nOfLentille));
-            f1.setFont(Font.font(20));
-            f1.setTranslateX(F);
-            f1.setTranslateY(-q + 10);
-
             Line fl2 = new Line(-F, -q, -F, q);
-            Label f2 = new Label("F" + (nOfLentille == 0 ? "" : nOfLentille));
-            f2.setFont(Font.font(20));
-            f2.setTranslateX(-F);
-            f2.setTranslateY(-q + 10);
 
-            return new Group(fl1, fl2, f1, f2);
+            return new Group(fl1, fl2);
+      }
+
+      private Group drawABData() {
+            Group g = new Group();
+            int fs = 15;
+            if ( ABNamed ) {
+                  Text A = new Text(ABName.split(" ")[0]);
+                  A.setFont(Font.font(fs));
+                  A.setTranslateX(getAPlace());
+                  A.setTranslateY((getALength() > 0 ? -10 : 15));
+                  Text B = new Text(ABName.split(" ")[1]);
+                  B.setFont(Font.font(fs));
+                  B.setTranslateX(getAPlace());
+                  B.setTranslateY(getALength() - (getALength() > 0 ? -20 : 15));
+                  g.getChildren().addAll(A, B);
+            }
+            if ( AB_Named ) {
+                  Text A_ = new Text(AB_Name.split(" ")[0]);
+                  A_.setFont(Font.font(fs));
+                  A_.setTranslateX(getX0());
+                  A_.setTranslateY((getY0() > 0 ? -10 : 15));
+
+                  Text B_ = new Text(AB_Name.split(" ")[1]);
+                  B_.setFont(Font.font(fs));
+                  B_.setTranslateX(getX0());
+                  B_.setTranslateY(getY0() - (getY0() > 0 ? -20 : 15));
+                  g.getChildren().addAll(A_, B_);
+            }
+
+            return g;
+      }
+
+      private Group drawLunetteData() {
+            Text data = new Text(getData());
+            data.setFont(Font.font(data.getFont().getFamily(), FontWeight.BOLD, 20));
+            data.setTranslateX(-(data.getLayoutBounds().getWidth() / 2));
+            data.setTranslateY(-(getYy() / 2 + 50));
+            return new Group(data);
       }
 
       private Group drawLightRay() {
@@ -228,15 +352,14 @@ public class Systeme_Simple extends System {
             return new Group(X);
       }
 
-      /*dashed*/
       private Group drawAF(boolean isDashed) {
             Group g = new Group();
 //            y = (ALength/F)x +ALength
-            double x = maxX;
-            double y = (ALength / F) * maxX + ALength;
-            if ( Math.abs(y) > Math.abs(yEdge) ) {
-                  y = Math.copySign(yEdge, y);
-                  x = y / (ALength / APlace);
+            double x = APP.xEdge;
+            double y = (ALength / F) * APP.xEdge + ALength;
+            if ( Math.abs(y) > Math.abs(APP.yEdge) ) {
+                  y = Math.copySign(APP.yEdge, y);
+                  x = (y - ALength) / (ALength / F);
             }
 
             if ( removeWastedRays ) {
@@ -254,14 +377,13 @@ public class Systeme_Simple extends System {
             return g;
       }
 
-      /*dashed*/
       private Group drawAO(boolean isDashed) {
             Group g = new Group();
 //            y = (ALength/APlace) x
-            double x = maxX;
-            double y = maxX * (ALength / APlace);
-            if ( Math.abs(y) > Math.abs(yEdge) ) {
-                  y = Math.copySign(yEdge, y);
+            double x = APP.xEdge;
+            double y = APP.xEdge * (ALength / APlace);
+            if ( Math.abs(y) > Math.abs(APP.yEdge) ) {
+                  y = Math.copySign(APP.yEdge, y);
                   x = y / (ALength / APlace);
             }
 
@@ -298,31 +420,32 @@ public class Systeme_Simple extends System {
             Group g = new Group();
             int q = 10;
 
-            Line x = new Line(-xx / 2, 0, xx / 2, 0);
-            Line y = new Line(0, -yy / 2, 0, yy / 2);
+            Line x = new Line(-APP.xEdge, 0, APP.xEdge, 0);
+            Line y = new Line(0, -getYy() / 2, 0, getYy() / 2);
             y.setStrokeWidth(5);
             g.getChildren().addAll(x, y);
             switch ( type ) {
                   case LENTILLE_CONVERGENTE: {
-                        Line a1 = new Line(q, yy / 2 - q, 0, yy / 2);
-                        a1.setStrokeWidth(5);
-                        Line a2 = new Line(-q, yy / 2 - q, 0, yy / 2);
-                        a2.setStrokeWidth(5);
-                        Line b1 = new Line(q, -yy / 2 + q, 0, -yy / 2);
-                        b1.setStrokeWidth(5);
-                        Line b2 = new Line(-q, -yy / 2 + q, 0, -yy / 2);
-                        b2.setStrokeWidth(5);
+                        int sw = 5;
+                        Line a1 = new Line(q, getYy() / 2 - q, 0, getYy() / 2);
+                        a1.setStrokeWidth(sw);
+                        Line a2 = new Line(-q, getYy() / 2 - q, 0, getYy() / 2);
+                        a2.setStrokeWidth(sw);
+                        Line b1 = new Line(q, -getYy() / 2 + q, 0, -getYy() / 2);
+                        b1.setStrokeWidth(sw);
+                        Line b2 = new Line(-q, -getYy() / 2 + q, 0, -getYy() / 2);
+                        b2.setStrokeWidth(sw);
                         g.getChildren().addAll(a1, a2, b1, b2);
                   }
                   break;
                   case LENTILLE_DIVERGENTE: {
-                        Line a1 = new Line(q, yy / 2 + q, 0, yy / 2);
+                        Line a1 = new Line(q, getYy() / 2 + q, 0, getYy() / 2);
                         a1.setStrokeWidth(5);
-                        Line a2 = new Line(-q, yy / 2 + q, 0, yy / 2);
+                        Line a2 = new Line(-q, getYy() / 2 + q, 0, getYy() / 2);
                         a2.setStrokeWidth(5);
-                        Line b1 = new Line(q, -yy / 2 - q, 0, -yy / 2);
+                        Line b1 = new Line(q, -getYy() / 2 - q, 0, -getYy() / 2);
                         b1.setStrokeWidth(5);
-                        Line b2 = new Line(-q, -yy / 2 - q, 0, -yy / 2);
+                        Line b2 = new Line(-q, -getYy() / 2 - q, 0, -getYy() / 2);
                         b2.setStrokeWidth(5);
                         g.getChildren().addAll(a1, a2, b1, b2);
                   }

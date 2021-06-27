@@ -13,6 +13,9 @@ import javafx.scene.Group;
 public abstract class System {
 
       protected double F;
+      private double yy = 500;
+
+      private boolean isDataShown;
 
       public double getF() {
             return F;
@@ -23,4 +26,20 @@ public abstract class System {
       }
 
       public abstract Group draw();
+
+      public double getYy() {
+            return yy;
+      }
+
+      public void setYy(double _yy) {
+            this.yy = _yy;
+      }
+
+      public boolean isDataShown() {
+            return isDataShown;
+      }
+
+      public void setDataShown(boolean _dataShown) {
+            this.isDataShown = _dataShown;
+      }
 }

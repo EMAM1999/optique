@@ -5,6 +5,7 @@
  */
 package design;
 
+import activities.Systeme_Simple;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -42,15 +43,14 @@ public class APP extends Application {
       static activities.System thisSystem;
       static Group thisDraw;
       static Pane root;
-//      Axis
-      static int xx = 10000;
 
-/////
+      public static final double xEdge = 100_000;
+      public static final double yEdge = 100_000;
+      public static final double edgeWidth = 50;
+
+///////////////
       static Group initEdges(int start, int end, int value) {
             return new Object() {
-                  //      Slider
-                  private Slider s;
-
                   private Group init() {
                         Group g1 = initSlider(start, end, value);
                         Pane g2 = initTitleBar(projetName, width, 20);
@@ -61,7 +61,7 @@ public class APP extends Application {
                   private Group initSlider(int start, int end, int value) {
                         Group g = new Group();
 
-                        s = new Slider(start, end, value);
+                        Slider s = new Slider(start, end, value);
                         s.setShowTickMarks(true);
                         s.setShowTickLabels(true);
                         s.setMinorTickCount((start + end) / 10);
@@ -73,22 +73,10 @@ public class APP extends Application {
                         s.setPrefSize(width / 3, 10);
                         s.setCursor(Cursor.HAND);
                         s.setOnMousePressed((e) -> {
-                              int x = 20;
-                              if ( s.getValue() > -x && s.getValue() < x ) {
-                                    s.setValue(0);
-                              }
-                              thisSystem.setF(s.getValue());
-                              thisDraw.getChildren().clear();
-                              thisDraw.getChildren().addAll(thisSystem.draw());
+                              refreshTheDraw(s.getValue());
                         });
                         s.setOnMouseDragged((e) -> {
-                              int x = 20;
-                              if ( s.getValue() > -x && s.getValue() < x ) {
-                                    s.setValue(0);
-                              }
-                              thisSystem.setF(s.getValue());
-                              thisDraw.getChildren().clear();
-                              thisDraw.getChildren().addAll(thisSystem.draw());
+                              refreshTheDraw(s.getValue());
                         });
                         return g;
                   }
@@ -104,9 +92,6 @@ public class APP extends Application {
 
                         return l;
                   }
-
-                  double xStage;
-                  double yStage;
 
                   private Pane initTitleBar(String title, double width, int height) {
                         Stage s = new Stage();
@@ -126,21 +111,16 @@ public class APP extends Application {
                               }
                         });
                         Label back = createLabelBtn("<-", "", Color.BLACK, 40, height, (e) -> {
-                              APP.switchScenes(SCENE.MAIN, 0, 0, 0);
+                              APP.switchScenes(SCENE.MAIN, 0, 0);
                         });
-                        Label t = createLabelBtn(title, "", Color.BLACK, width - 160, height, (e) -> {
+                        Label info = createLabelBtn("i", "", Color.BLACK, 40, height, (e) -> {
+                              APP.switchDataVisiblity();
                         });
-                        g.getChildren().add(new HBox(t, back, help, min, close));
-//                        root.setOnMousePressed(e -> {
-//                              xStage = e.getX();
-//                              yStage = e.getY();
-//                        });
-//                        root.setOnMouseDragged(e -> {
-//                              double difX = e.getX() + xStage;
-//                              double difY = e.getY() + yStage;
-//                              stage.setX(stage.getX() + difX);
-//                              stage.setY(stage.getY() + difY);
-//                        });
+                        Label t = createLabelBtn(title, "", Color.BLACK, width - 200, height, (e) -> {
+                        });
+                        HBox box = new HBox(t, info, back, help, min, close);
+                        box.setAlignment(Pos.CENTER);
+                        g.getChildren().add(box);
                         return g;
                   }
 
@@ -175,7 +155,6 @@ public class APP extends Application {
                               zoomValue.setText("100\n%");
                               thisDraw.setTranslateX(width / 2);
                               thisDraw.setTranslateY(height / 2);
-                              s.setDisable(false);
                         });
                         g.getChildren().add(new VBox(zoomIn, zoomValue, zoomOut));
                         g.setTranslateX(width - 40);
@@ -187,7 +166,7 @@ public class APP extends Application {
       }
 ///////////////
 
-      static void switchScenes(SCENE scene, double APlace, double ALength, double yy) {
+      static void switchScenes(SCENE scene, double APlace, double ALength) {
             stage.close();
             switch ( scene ) {
                   case MAIN:
@@ -197,15 +176,16 @@ public class APP extends Application {
                         break;
                   case SIMPLE:
                         stage = new Stage(StageStyle.TRANSPARENT);
-                        stage.setScene(Scenes.initSimpleScene(APlace, ALength, yy));
+                        stage.setScene(Scenes.initSimpleScene(0, APlace, ALength));
                         break;
                   case MICROSCOPE:
                         stage = new Stage(StageStyle.TRANSPARENT);
-                        stage.setScene(Scenes.initMicroscopeScene(yy, -150, -100, APlace, ALength));
+                        double f1 = -APlace <= 150 ? APlace / 2 : -150;
+                        stage.setScene(Scenes.initMicroscopeScene(f1, -100, APlace, ALength));
                         break;
                   case ASTRONOMIQUE:
                         stage = new Stage(StageStyle.TRANSPARENT);
-                        stage.setScene(Scenes.initAstronomiqueScene(yy, -150, -100));
+                        stage.setScene(Scenes.initAstronomiqueScene(-150, -100));
 
             }
 //            stage.setScene(initMicroscopeScene(xx, 400, -150, -100, -300, -100));
@@ -218,7 +198,7 @@ public class APP extends Application {
       public void start(Stage primaryStage) {
             stage = primaryStage;
             root = new Pane();
-            switchScenes(SCENE.MAIN, 0, 0, 0);
+            switchScenes(SCENE.MAIN, 0, 0);
       }
 
       static enum SCENE {
@@ -232,4 +212,30 @@ public class APP extends Application {
             launch(args);
       }
 
+      public static void refreshTheDraw(double value, boolean switchDataVisiblity) {
+            refreshTheDraw(value);
+            if ( switchDataVisiblity ) {
+                  switchDataVisiblity();
+            }
+      }
+
+      public static void refreshTheDraw(double value) {
+            int x = 15;
+
+            if ( value > -x && value < x ) {
+                  value = 0;
+            }
+            thisSystem.setF(value);
+            thisDraw.getChildren().clear();
+            thisDraw.getChildren().addAll(thisSystem.draw());
+            if ( thisSystem instanceof Systeme_Simple ) {
+                  ((Systeme_Simple)thisSystem).setData(((Systeme_Simple)thisSystem).getType().toString());
+            }
+      }
+
+      public static void switchDataVisiblity() {
+            thisSystem.setDataShown(!thisSystem.isDataShown());
+            thisDraw.getChildren().clear();
+            thisDraw.getChildren().addAll(thisSystem.draw());
+      }
 }
