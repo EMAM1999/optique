@@ -26,20 +26,25 @@ public class Le_microscope extends System {
       }
 
       public Le_microscope(double _F1, double _F2, double _APlace, double _ALength, String data1, String data2) {
+            this(_F1, _F2, _APlace, _ALength, data1, data2, Math.abs(2.5 * _ALength));
+      }
+
+      public Le_microscope(double _F1, double _F2, double _APlace, double _ALength, String data1, String data2, double _yy) {
             this.F1 = _F1;
             super.F = _F2;
             this.APlace = _APlace;
             this.ALength = _ALength;
-            setYy(2.5 * ALength);
+            setYy(_yy);
             this.data1 = data1;
             this.data2 = data2;
             distance = 500;
+            java.lang.System.out.println(getYy());
 //            distance = -2 * APlace;
       }
 
       @Override
       public Group draw() {
-            Systeme_Simple system = new Systeme_Simple(Type.LENTILLE_CONVERGENTE, F1, APlace, ALength, 1, true, "A B");
+            Systeme_Simple system = new Systeme_Simple(Type.LENTILLE_CONVERGENTE, F1, APlace, ALength, 1, true, "A B", "", getData()[0], getYy());
             system.setDataShown(this.isDataShown());
             system.setData(data1);
             Group g = system.draw();
@@ -47,7 +52,7 @@ public class Le_microscope extends System {
             double x = system.getX0();
             double y = system.getY0();
 
-            system = new Systeme_Simple(Type.LENTILLE_CONVERGENTE, getF(), -distance + x, y, 2, false, "A1 B1", "A' B'");
+            system = new Systeme_Simple(Type.LENTILLE_CONVERGENTE, getF(), -distance + x, y, 2, false, "A1 B1", "A' B'", getData()[1], getYy() + 50);
             system.setDataShown(this.isDataShown());
             system.setData(data2);
             Group g2 = system.draw();

@@ -27,14 +27,16 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import static design.APP.switchScenes;
+
 /**
 
  @author EMAM
  */
 public class APP extends Application {
 
-      static String mainName = "Salut les étudiant d'ISTA!";
-      static String projetName = "";
+      static String mainName = "Simulation de syst�mes optiques";
+      static String projetName = "ISTA-OPT Logiciel de simulation en optique g�om�trique";
 
       public static double width = 1200;
       public static double height = 650;
@@ -64,7 +66,8 @@ public class APP extends Application {
                         Slider s = new Slider(start, end, value);
                         s.setShowTickMarks(true);
                         s.setShowTickLabels(true);
-                        s.setMinorTickCount((start + end) / 10);
+                        s.setMinorTickCount(5);
+                        s.setMajorTickUnit((end - start) / 10);
 
                         g.setTranslateX(width / 3);
                         g.setTranslateY(height - 50);
@@ -73,10 +76,10 @@ public class APP extends Application {
                         s.setPrefSize(width / 3, 10);
                         s.setCursor(Cursor.HAND);
                         s.setOnMousePressed((e) -> {
-                              refreshTheDraw(s.getValue());
+                              refreshTheDraw(milliToPX(-s.getValue()));
                         });
                         s.setOnMouseDragged((e) -> {
-                              refreshTheDraw(s.getValue());
+                              refreshTheDraw(milliToPX(-s.getValue()));
                         });
                         return g;
                   }
@@ -96,13 +99,13 @@ public class APP extends Application {
                   private Pane initTitleBar(String title, double width, int height) {
                         Stage s = new Stage();
                         Pane g = new Pane();
-                        Label close = createLabelBtn("X", "", Color.BROWN, 40, height, (e) -> {
+                        Label close = createLabelBtn("X", "Quitter", Color.BROWN, 40, height, (e) -> {
                               stage.close();
                         });
-                        Label min = createLabelBtn("-", "", Color.SLATEGREY, 40, height, (e) -> {
+                        Label min = createLabelBtn("-", "R�duire", Color.SLATEGREY, 40, height, (e) -> {
                               stage.setIconified(true);
                         });
-                        Label help = createLabelBtn("?", "", Color.BLACK, 40, height, (e) -> {
+                        Label help = createLabelBtn("?", "Aide", Color.BLACK, 40, height, (e) -> {
                               if ( !s.isShowing() ) {
                                     TextArea text = new TextArea(Explain.getExplain(thisSystem));
                                     text.setEditable(false);
@@ -110,10 +113,10 @@ public class APP extends Application {
                                     s.show();
                               }
                         });
-                        Label back = createLabelBtn("<-", "", Color.BLACK, 40, height, (e) -> {
+                        Label back = createLabelBtn("<-", "Nouveau", Color.BLACK, 40, height, (e) -> {
                               APP.switchScenes(SCENE.MAIN, 0, 0);
                         });
-                        Label info = createLabelBtn("i", "", Color.BLACK, 40, height, (e) -> {
+                        Label info = createLabelBtn("i", "Afficher les noms des composants du syst�me ", Color.BLACK, 40, height, (e) -> {
                               APP.switchDataVisiblity();
                         });
                         Label t = createLabelBtn(title, "", Color.BLACK, width - 200, height, (e) -> {
@@ -166,6 +169,14 @@ public class APP extends Application {
       }
 ///////////////
 
+      static double milliToPX(double milli) {
+            return milli * 5;
+      }
+
+      static int PXToMilli(int px) {
+            return px / 5;
+      }
+
       static void switchScenes(SCENE scene, double APlace, double ALength) {
             stage.close();
             switch ( scene ) {
@@ -194,7 +205,6 @@ public class APP extends Application {
             stage.show();
       }
 
-      @Override
       public void start(Stage primaryStage) {
             stage = primaryStage;
             root = new Pane();
@@ -205,9 +215,6 @@ public class APP extends Application {
             MAIN, SIMPLE, ASTRONOMIQUE, MICROSCOPE
       }
 
-      /**
-       @param args the command line arguments
-       */
       public static void main(String[] args) {
             launch(args);
       }
@@ -220,17 +227,17 @@ public class APP extends Application {
       }
 
       public static void refreshTheDraw(double value) {
-            int x = 15;
+            int x = 10;
 
             if ( value > -x && value < x ) {
                   value = 0;
             }
             thisSystem.setF(value);
             thisDraw.getChildren().clear();
-            thisDraw.getChildren().addAll(thisSystem.draw());
             if ( thisSystem instanceof Systeme_Simple ) {
                   ((Systeme_Simple)thisSystem).setData(((Systeme_Simple)thisSystem).getType().toString());
             }
+            thisDraw.getChildren().addAll(thisSystem.draw());
       }
 
       public static void switchDataVisiblity() {

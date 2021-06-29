@@ -33,12 +33,15 @@ public class Scenes {
 
       public static Scene initMainScene() {
             ObservableList<String> list = FXCollections.observableArrayList();
-            list.add("Système Simple");
-            list.add("Le microscope");
-            list.add("lunette astronomique");
+            String x = "Système Simple";
+            String y = "Microscope";
+            String z = "Lunette Astronomique";
+            list.add(x);
+            list.add(y);
+            list.add(z);
             ComboBox<String> box = new ComboBox(list);
             box.setMaxWidth(200);
-            box.setValue("Système Simple");
+            box.setValue(list.get(0));
 
             TextField ALength = new TextField();
             ALength.setPromptText("Hauteur de l'objet");
@@ -48,38 +51,40 @@ public class Scenes {
             APlace.setPromptText("Position de l'objet");
             APlace.setMaxWidth(200);
 
-            Button enter = new Button("Entre");
+            Button enter = new Button("Lancer simulation");
             enter.setMaxWidth(200);
             enter.setOnAction((e) -> {
                   try {
 
-                        if ( box.getValue().equalsIgnoreCase("Système Simple") ) {
-                              double AP = Double.parseDouble(APlace.getText());
-                              double AL = Double.parseDouble(ALength.getText());
+                        if ( box.getValue().equalsIgnoreCase(x) ) {
+                              // To convert from milli to pixel multiply by 5
+                              double AP = APP.milliToPX(Double.parseDouble(APlace.getText()));
+                              double AL = APP.milliToPX(Double.parseDouble(ALength.getText()));
                               if ( AP <= 0 ) {
-                                    throw new Exception("Position must be positive");
+                                    throw new Exception("La valeur de la position doit être positive");
                               } else if ( AL == 0 ) {
-                                    throw new Exception("Object length must not be 0");
+                                    throw new Exception("La hauteur ne doit pas être nulle");
                               } else {
                                     APP.switchScenes(SCENE.SIMPLE, -AP, -AL);
                               }
 
-                        } else if ( box.getValue().equalsIgnoreCase("Le microscope") ) {
-                              double AP = Double.parseDouble(APlace.getText());
-                              double AL = Double.parseDouble(ALength.getText());
+                        } else if ( box.getValue().equalsIgnoreCase(y) ) {
+                              // To convert from milli to pixel multiply by 5
+                              double AP = APP.milliToPX(Double.parseDouble(APlace.getText()));
+                              double AL = APP.milliToPX(Double.parseDouble(ALength.getText()));
                               if ( AP <= 0 ) {
-                                    throw new Exception("Position must be positive");
+                                    throw new Exception("La valeur de la position doit être positive");
                               } else if ( AL == 0 ) {
-                                    throw new Exception("Object length must not be 0");
+                                    throw new Exception("La hauteur ne doit pas être nulle");
                               } else {
                                     APP.switchScenes(SCENE.MICROSCOPE, -AP, -AL);
                               }
 
-                        } else if ( box.getValue().equalsIgnoreCase("lunette astronomique") ) {
+                        } else if ( box.getValue().equalsIgnoreCase(z) ) {
                               APP.switchScenes(SCENE.ASTRONOMIQUE, 0, 0);
                         }
                   } catch ( NumberFormatException ex ) {
-                        Alert a = new Alert(AlertType.ERROR, "Field emty or contain illegal characters");
+                        Alert a = new Alert(AlertType.ERROR, "La zone est vide ou vous avez utilisé des caractéres non autorisés");
                         a.setHeaderText("");
                         a.showAndWait();
                   } catch ( Exception ex ) {
@@ -90,7 +95,7 @@ public class Scenes {
 
             });
             box.setOnAction((e) -> {
-                  if ( box.getValue().equalsIgnoreCase("lunette astronomique") ) {
+                  if ( box.getValue().equalsIgnoreCase("Lunette Astronomique") ) {
                         ALength.setDisable(true);
                         APlace.setDisable(true);
                   } else {
@@ -110,13 +115,13 @@ public class Scenes {
       public static Scene initSimpleScene(double F, double APlace, double ALength) {
             return new Object() {
                   public Scene initScene() {
-                        Systeme_Simple simpleSystemObject = new Systeme_Simple(Type.MERROR, F, APlace, ALength, 0, false, "A B", "A' B'");
+                        Systeme_Simple simpleSystemObject = new Systeme_Simple(Type.MIROIRE, F, APlace, ALength, 0, false, "A B", "A' B'");
                         simpleSystemObject.setData(simpleSystemObject.getType().toString());
                         Group g = simpleSystemObject.draw();
                         thisDraw = g;
                         thisSystem = simpleSystemObject;
 
-                        root = new Pane(g, APP.initEdges(-750, 750, 0));
+                        root = new Pane(g, APP.initEdges(-200, 200, APP.PXToMilli(-(int)F)));
                         root.setOnMousePressed(e -> hold(e));
                         root.setOnMouseDragged(e -> drag(e));
                         root.setOnMouseReleased(e -> release());
@@ -135,11 +140,11 @@ public class Scenes {
 
                   private Scene initScen() {
                         LunetteAstronomique astronomique = new LunetteAstronomique(F1, F2);
-                        astronomique.setData("OB", "OC");
+                        astronomique.setData("objectif", "oculaire");
                         Group g = astronomique.draw();
                         thisSystem = astronomique;
                         thisDraw = g;
-                        root = new Pane(g, APP.initEdges(-500, -10, 100));
+                        root = new Pane(g, APP.initEdges(2, 200, APP.PXToMilli(-(int)F2)));
                         root.setOnMousePressed(e -> hold(e));
                         root.setOnMouseDragged(e -> drag(e));
                         root.setOnMouseReleased(e -> release());
@@ -154,15 +159,15 @@ public class Scenes {
 
       public static Scene initMicroscopeScene(double _F1, double _F2, double _APlace, double _ALength) {
             return new Object() {
-                  Scene initScene() {
 
+                  private Scene initScene() {
                         Le_microscope le_microscope = new Le_microscope(_F1, _F2, _APlace, _ALength);
-                        le_microscope.setData("OB", "OC");
+                        le_microscope.setData("Objectif", "Oculaire");
                         Group g = le_microscope.draw();
-                        thisDraw = g;
                         thisSystem = le_microscope;
+                        thisDraw = g;
 
-                        root = new Pane(g, initEdges(-500, -10, 100));
+                        root = new Pane(g, APP.initEdges(2, 200, APP.PXToMilli(-(int)_F2)));
                         root.setOnMousePressed(e -> hold(e));
                         root.setOnMouseDragged(e -> drag(e));
                         root.setOnMouseReleased(e -> release());

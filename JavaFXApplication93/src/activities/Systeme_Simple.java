@@ -55,18 +55,22 @@ public class Systeme_Simple extends System {
       }
 
       public Systeme_Simple(Type _type, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays, String ABName, String AB_Name, String data) {
+            this(_type, _F, _APlace, _ALength, _nOfLentille, _removeWastedRays, ABName, AB_Name, data, Math.abs(2.5 * _ALength));
+      }
+
+      public Systeme_Simple(Type _type, double _F, double _APlace, double _ALength, int _nOfLentille, boolean _removeWastedRays, String ABName, String AB_Name, String data, double _yy) {
             this.type = _type;
             super.F = _F;
             this.APlace = _APlace;
             this.ALength = _ALength;
             this.nOfLentille = _nOfLentille;
             this.removeWastedRays = _removeWastedRays;
-            setYy(Math.abs(2.5 * _ALength));
+            setYy(Math.max(2.5 * _ALength, _yy));
             this.ABName = ABName;
             this.ABNamed = ABName.trim().isEmpty() ? false : true;
             this.AB_Name = AB_Name;
             this.AB_Named = AB_Name.trim().isEmpty() ? false : true;
-
+            setData(data);
             super.setDataShown(true);
       }
 
@@ -114,7 +118,7 @@ public class Systeme_Simple extends System {
       public void setF(double _F) {
             super.F = _F;
             if ( _F == 0 ) {
-                  this.type = Type.MERROR;
+                  this.type = Type.MIROIRE;
             } else {
                   this.type = ((getF() < 0 && getAPlace() < 0) || (getF() > 0 && getAPlace() > 0))
                           ? Type.LENTILLE_CONVERGENTE : Type.LENTILLE_DIVERGENTE;
@@ -132,6 +136,7 @@ public class Systeme_Simple extends System {
 
       @Override
       public Group draw() {
+
             Group g = new Group();
             ////////////////////// Draw an edges  to fix the size of the drawn to control the zoom
             Group e = drawEdges();
@@ -145,7 +150,7 @@ public class Systeme_Simple extends System {
                         Group f = drawF();
                         g.getChildren().addAll(f);
                         break;
-                  case MERROR:
+                  case MIROIRE:
                         x0 = -APlace;
                         y0 = ALength;
                         Group merrorRays = drawMerrorLightRay(3);
@@ -155,11 +160,12 @@ public class Systeme_Simple extends System {
                   Group AB = drawABData();
                   Group data = drawLunetteData();
                   Group f = drawFData();
-                  g.getChildren().addAll(AB, data, f);
+                  Group s = drawSData();
+                  g.getChildren().addAll(AB, data, f, s);
             }
             Group axis = drawAxis();
             Group A = drawA(APlace, ALength, 2.5, false, Color.BLACK);
-            Group A0 = drawA(x0, y0, 2.5, Math.abs(APlace) < Math.abs(F) || type == Type.MERROR || type == Type.LENTILLE_DIVERGENTE, Color.SIENNA);
+            Group A0 = drawA(x0, y0, 2.5, Math.abs(APlace) < Math.abs(F) || type == Type.MIROIRE || type == Type.LENTILLE_DIVERGENTE, Color.SIENNA);
             g.getChildren().addAll(axis, A, A0);
             return g;
       }
@@ -213,18 +219,30 @@ public class Systeme_Simple extends System {
             if ( F != 0 ) {
                   int fs = 15;
 
-                  Text f1 = new Text("F'" + (nOfLentille == 0 ? "" : nOfLentille));
+                  Text f1 = new Text("F" + (nOfLentille == 0 ? "" : nOfLentille));
                   f1.setFont(Font.font(fs));
                   f1.setTranslateX(F);
                   f1.setTranslateY(20);
 
-                  Text f2 = new Text("F" + (nOfLentille == 0 ? "" : nOfLentille));
+                  Text f2 = new Text("F'" + (nOfLentille == 0 ? "" : nOfLentille));
                   f2.setFont(Font.font(fs));
                   f2.setTranslateX(-F);
                   f2.setTranslateY(20);
 
                   g.getChildren().addAll(f1, f2);
             }
+            return g;
+      }
+
+      private Group drawSData() {
+            Group g = new Group();
+            int fs = 15;
+            Text s = new Text("S" + (nOfLentille == 0 ? "" : nOfLentille));
+            s.setFont(Font.font(fs));
+            s.setTranslateX(5);
+            s.setTranslateY(15);
+
+            g.getChildren().addAll(s);
             return g;
       }
 
@@ -246,18 +264,22 @@ public class Systeme_Simple extends System {
 
                   Line l2 = new Line(0, r, APlace, r - ALength + r);
                   l2.setStroke(Color.YELLOWGREEN);
+                  g.getChildren().addAll(l1, l2);
 
-                  Line l3 = new Line(0, r, x0, y0);
-                  l3.setStroke(Color.SIENNA);
-                  l3.setOpacity(0.5);
-                  g.getChildren().addAll(l1, l2, l3);
+                  // y = (y0-r/x0)x + r
+                  for ( int j = 5; j < Math.abs(y0); j += 10 ) {
+                        Line l3 = new Line(j - 5, ((y0 - r) / x0) * (j - 5) + r, j, ((y0 - r) / x0) * j + r);
+                        l3.setStroke(Color.SIENNA);
+                        l3.setOpacity(0.5);
+                        g.getChildren().addAll(l3);
+                  }
             }
 
             return g;
       }
 
       public static enum Type {
-            MERROR,
+            MIROIRE,
             LENTILLE_CONVERGENTE,
             LENTILLE_DIVERGENTE
       }
@@ -348,7 +370,7 @@ public class Systeme_Simple extends System {
 
       private Group drawAA() {
             Line X = new Line(APlace, ALength, 0, ALength);
-            X.setStroke(Color.YELLOWGREEN);
+            X.setStroke(Color.RED);
             return new Group(X);
       }
 
@@ -367,13 +389,17 @@ public class Systeme_Simple extends System {
                   y = Double.isInfinite(y0) ? y : y0;
             }
             Line FL = new Line(0, ALength, x, y);
-            FL.setStroke(Color.YELLOWGREEN);
-            if ( isDashed ) {
-                  Line FLd = new Line(0, ALength, -FL.getEndX(), ALength - (ALength / F) * FL.getEndX());
-                  FLd.setStroke(Color.YELLOWGREEN);
-                  g.getChildren().add(FLd);
-            }
+            FL.setStroke(Color.RED);
             g.getChildren().add(FL);
+
+            if ( isDashed ) {
+                  for ( int i = -5; i > x0 - 100; i -= 10 ) {
+                        Line FLd = new Line(i + 5, (ALength / F) * (i + 5) + ALength, i, (ALength / F) * (i) + ALength);
+                        FLd.setStroke(Color.RED);
+                        g.getChildren().add(FLd);
+                  }
+            }
+
             return g;
       }
 
@@ -394,11 +420,14 @@ public class Systeme_Simple extends System {
 
             Line O = new Line(APlace, ALength, x, y);
             if ( isDashed ) {
-                  Line AOd = new Line(APlace, ALength, -O.getEndX(), O.getEndX() * (-ALength / APlace));
-                  AOd.setStroke(Color.TURQUOISE);
-                  g.getChildren().add(AOd);
+                  for ( int i = -5; i > x0 - 100; i -= 10 ) {
+                        Line AOd = new Line(i - 5, (i - 5) * (ALength / APlace), i, i * (ALength / APlace));
+                        AOd.setStroke(Color.YELLOWGREEN);
+                        g.getChildren().add(AOd);
+                  }
+
             }
-            O.setStroke(Color.TURQUOISE);
+            O.setStroke(Color.YELLOWGREEN);
             g.getChildren().add(O);
             return g;
       }
@@ -451,7 +480,7 @@ public class Systeme_Simple extends System {
                   }
                   break;
 
-                  case MERROR:
+                  case MIROIRE:
 
             }
             return g;

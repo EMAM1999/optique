@@ -9,7 +9,6 @@ import activities.Systeme_Simple.Type;
 import static design.APP.*;
 
 import javafx.scene.Group;
-import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
@@ -30,14 +29,18 @@ public class LunetteAstronomique extends System {
 
       private double[] rays;
 
-      String data1;
-      String data2;
+      private String data1;
+      private String data2;
 
       public LunetteAstronomique(double _F1, double _F2) {
             this(_F1, _F2, "", "");
       }
 
       public LunetteAstronomique(double _F1, double _F2, String data1, String data2) {
+            this(_F1, _F2, data1, data2, Math.max(300, Math.abs(_F1 * 2) + 50));
+      }
+
+      public LunetteAstronomique(double _F1, double _F2, String data1, String data2, double _yy) {
             this.F1 = _F1;
             super.F = _F2;
             this.x0 = this.y0 = -_F1;
@@ -45,16 +48,18 @@ public class LunetteAstronomique extends System {
 //            distance = 2 * Math.abs(this.F1);
             this.data1 = data1;
             this.data2 = data2;
+            super.setYy(_yy);
       }
 
       @Override
       public Group draw() {
             Group g1 = drawParrarelLines();
-            Systeme_Simple simple = new Systeme_Simple(Type.LENTILLE_CONVERGENTE, super.F, -distance + x0, y0, 2, false, "A1 B1", "A' B'");
+
+            Systeme_Simple simple = new Systeme_Simple(Type.LENTILLE_CONVERGENTE, super.F, -distance + x0, y0, 2, false, "A1 B1", "A' B'", getData()[1], getYy() + 50);
             simple.setDataShown(this.isDataShown());
-            simple.setData(data2);
             Group g2 = simple.draw();
             g2.setTranslateX(distance);
+
             return new Group(g1, g2);
       }
 
@@ -84,14 +89,15 @@ public class LunetteAstronomique extends System {
             if ( this.isDataShown() ) {
                   Group data = drawLunetteData();
                   Group f = drawFData();
-                  g.getChildren().addAll(f, data);
+                  Group s = drawSData();
+                  g.getChildren().addAll(s, f, data);
             }
             Group B = drawB();
             Group xy = drawAxis();
             Group f = drawF();
             Group rays = drawRays(2);
             Group A = drawA(2.5, Color.BLACK);
-            g.getChildren().addAll(B, xy, rays, A, f);
+            g.getChildren().addAll(B, rays, A, f, xy);
             return g;
       }
 
@@ -131,17 +137,31 @@ public class LunetteAstronomique extends System {
       }
 
       private Group drawFData() {
-            Label f1 = new Label("F'1");
-            f1.setFont(Font.font(20));
-            f1.setTranslateX(F1);
-            f1.setTranslateY(10);
+            int fs = 15;
 
-            Label f2 = new Label("F1");
-            f2.setFont(Font.font(20));
+            Text f1 = new Text("F1");
+            f1.setFont(Font.font(fs));
+            f1.setTranslateX(F1);
+            f1.setTranslateY(20);
+
+            Text f2 = new Text("F'1");
+            f2.setFont(Font.font(fs));
             f2.setTranslateX(-F1);
-            f2.setTranslateY(10);
+            f2.setTranslateY(20);
 
             return new Group(f1, f2);
+      }
+
+      private Group drawSData() {
+            Group g = new Group();
+            int fs = 15;
+            Text s = new Text("S1");
+            s.setFont(Font.font(fs));
+            s.setTranslateX(5);
+            s.setTranslateY(15);
+
+            g.getChildren().addAll(s);
+            return g;
       }
 
       private Group drawA(double width, Color color) {
@@ -173,16 +193,26 @@ public class LunetteAstronomique extends System {
       private Group drawRays(int number) {
             rays = rays == null ? new double[number] : rays;
             Group g = new Group();
-            g.getChildren().add(new Line(-xEdge, -yEdge, x0, y0));
+            Line l = new Line(-xEdge, -yEdge, x0, y0);
+            l.setStroke(Color.GREEN);
+            g.getChildren().add(l);
+
+            l = new Line(0, -F1, -xEdge, -xEdge - F1);
+            l.setStroke(Color.RED);
+            g.getChildren().add(l);
+            l = new Line(0, -F1, x0, y0);
+            l.setStroke(Color.RED);
+            g.getChildren().add(l);
+
             for ( int i = 0; i < number; i++ ) {
                   double q = rays[i];
                   if ( q == 0 ) {
-                        q = 50 * (int)(Math.random() * 10 - 5);
+                        q = getYy() / 11 * (int)(Math.random() * 10 - 5);
                         rays[i] = q;
                   }
-                  Line l = new Line(-xEdge, -yEdge + q, 0, q);
+                  Line l1 = new Line(-xEdge, -yEdge + q, 0, q);
                   Line l2 = new Line(0, q, x0, y0);
-                  g.getChildren().addAll(l, l2);
+                  g.getChildren().addAll(l1, l2);
 
             }
             return g;

@@ -21,8 +21,8 @@ public class Explain {
                               return "LENTILLE_CONVERGENTE";
                         case LENTILLE_DIVERGENTE:
                               return "LENTILLE_DIVERGENTE";
-                        case MERROR:
-                              return "MERROR";
+                        case MIROIRE:
+                              return "MIROIRE";
                   }
             } else if ( s instanceof Le_microscope ) {
                   return "Le_microscope";
